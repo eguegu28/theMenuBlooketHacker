@@ -1,0 +1,103 @@
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    Object.assign(canvas.style, {
+        position: 'fixed', inset: 0, zIndex: 999999, pointerEvents: 'none'
+    });
+    document.body.appendChild(canvas);
+
+    // Glitch/Nysn Palette: Neon Cyan, Magenta, Lime, and Digital Black/White
+    const colors = ['#00ffff', '#ff00ff', '#00ff00', '#ffffff', '#222222', '#ff0000']; 
+    let glitches = [];
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class GlitchParticle {
+        constructor(x, y, isExplosion = false) {
+            this.x = x; 
+            this.y = y;
+            this.isExplosion = isExplosion;
+            
+            // Randomly chunky or thin blocks
+            this.w = Math.random() * 20 + 5; 
+            this.h = Math.random() * 8 + 2;
+            
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = isExplosion ? Math.random() * 15 + 5 : Math.random() * 3 + 1;
+            this.color = colors[Math.floor(Math.random() * colors.length)];
+            this.opacity = 1;
+            
+            // The "Glitch Jitter" factor
+            this.life = 1.0;
+        }
+
+        update() {
+            // Jittery movement: teleport slightly every frame
+            this.x += Math.cos(this.angle) * this.speed + (Math.random() - 0.5) * 10;
+            this.y += Math.sin(this.angle) * this.speed + (Math.random() - 0.5) * 10;
+            
+            if (this.isExplosion) {
+                this.speed *= 0.92;
+            } else {
+                this.x -= 4; // High-speed glitch drift
+            }
+
+            this.opacity -= 0.04;
+            // Randomly resize for flickering effect
+            if (Math.random() > 0.8) this.w *= 1.5;
+        }
+
+        draw() {
+            if (this.opacity <= 0) return;
+            ctx.save();
+            ctx.globalAlpha = this.opacity;
+            
+            // Offset colors slightly to fake chromatic aberration
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.w, this.h);
+            
+            // Randomized "Digital Noise" overlay
+            if (Math.random() > 0.7) {
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(this.x - 5, this.y + 2, this.w / 2, 1);
+            }
+            
+            ctx.restore();
+        }
+    }
+
+    // 1. CLICK = Chaotic Glitch Supernova (All directions)
+    window.addEventListener('mousedown', (e) => {
+        for (let i = 0; i < 40; i++) {
+            glitches.push(new GlitchParticle(e.clientX, e.clientY, true));
+        }
+    });
+
+    // 2. MOVE = Glitchy "Screen Tear" Trail
+    window.addEventListener('mousemove', (e) => {
+        if (glitches.length < 100) {
+            // Spawn 2 at a time for a thicker, messier trail
+            glitches.push(new GlitchParticle(e.clientX, e.clientY, false));
+            glitches.push(new GlitchParticle(e.clientX, e.clientY, false));
+        }
+    });
+
+    function animate() {
+        // Leave a slight trail for that "broken monitor" ghosting effect
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        glitches = glitches.filter(g => g.opacity > 0);
+        glitches.forEach(g => {
+            g.update();
+            g.draw();
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+})();
