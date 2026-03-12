@@ -1,0 +1,77 @@
+/**
+ * NYAN SPARKLE CURSOR - PERFORMANCE EDITION
+ * Instructions: Just copy/paste this entire block.
+ */
+
+(function() {
+    // 1. Setup Canvas (Invisible overlay)
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:999999;';
+    document.body.appendChild(canvas);
+
+    const colors = ['#ff0000', '#ff9900', '#ffff00', '#33ff00', '#0099ff', '#6633ff'];
+    let sparkles = [];
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class NyanSparkle {
+        constructor(x, y, isExplosion = false) {
+            this.x = x; this.y = y;
+            this.isExplosion = isExplosion;
+            this.size = Math.random() * 5 + 3;
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = isExplosion ? Math.random() * 8 + 4 : Math.random() * 2 + 1;
+            this.color = colors[Math.floor(Math.random() * colors.length)];
+            this.opacity = 1;
+            this.spin = (Math.random() - 0.5) * 0.4;
+        }
+
+        update() {
+            if (this.isExplosion) this.angle += this.spin;
+            this.x += Math.cos(this.angle) * this.speed - (this.isExplosion ? 0 : 1.5);
+            this.y += Math.sin(this.angle) * this.speed;
+            this.opacity -= 0.03;
+        }
+
+        draw() {
+            ctx.globalAlpha = this.opacity;
+            ctx.fillStyle = this.color;
+            // Draw pixel star
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(this.x + this.size/4, this.y + this.size/4, this.size/2, this.size/2);
+        }
+    }
+
+    // 2. Interaction Listeners
+    window.addEventListener('mousemove', (e) => {
+        if (sparkles.length < 100) {
+            sparkles.push(new NyanSparkle(e.clientX, e.clientY, false));
+        }
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        for (let i = 0; i < 35; i++) {
+            sparkles.push(new NyanSparkle(e.clientX, e.clientY, true));
+        }
+    });
+
+    // 3. Main Loop
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        sparkles = sparkles.filter(s => s.opacity > 0);
+        sparkles.forEach(s => {
+            s.update();
+            s.draw();
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+})();
+
