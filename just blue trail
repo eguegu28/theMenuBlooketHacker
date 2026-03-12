@@ -1,0 +1,45 @@
+// 1. Create the Audio Element
+const tauntAudio = new Audio('https://raw.githubusercontent.com');
+tauntAudio.crossOrigin = "anonymous"; // Helps with security blocks
+
+// 2. Play on click
+document.addEventListener('click', () => {
+    tauntAudio.currentTime = 0;
+    tauntAudio.play().catch(e => console.log("Sound ready! Just click again."));
+});
+
+// 3. The Blue Trail
+const dots = [];
+const mouse = { x: 0, y: 0 };
+
+for (let i = 0; i < 12; i++) {
+    const d = document.createElement("div");
+    Object.assign(d.style, {
+        position: "fixed", height: "10px", width: "10px", borderRadius: "50%",
+        background: "#00a2ff", pointerEvents: "none", zIndex: "99999",
+        left: "0", top: "0"
+    });
+    document.body.appendChild(d);
+    dots.push({ el: d, x: 0, y: 0 });
+}
+
+window.addEventListener("mousemove", (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+});
+
+function draw() {
+    let x = mouse.x;
+    let y = mouse.y;
+    dots.forEach((dot) => {
+        dot.x += (x - dot.x) * 0.3;
+        dot.y += (y - dot.y) * 0.3;
+        dot.el.style.transform = `translate(${dot.x}px, ${dot.y}px)`;
+        x = dot.x;
+        y = dot.y;
+    });
+    requestAnimationFrame(draw);
+}
+draw();
+
+console.log("Taunt Mode Active! No more 'Unexpected Token'.");
