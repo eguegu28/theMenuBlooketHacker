@@ -13,6 +13,10 @@ A collection of high-energy visual mods and "troll" scripts for Blooket. This is
 *   **⚔️ Light Saber Glow:** Give your cursor a neon-glowing edge.
 *   **🔊 Chaos SFX:** Random sound effects triggered by your actions.
 *   "I made a script that trolls your friends by blacking out the screen with a glitchy cursor trail. 🌌💀"
+*   ### 📸 Preview
+> ![Glitch Preview](https://via.placeholder.com)
+*Visuals so cool they might actually crash your browser.*
+
 
 ---
 
