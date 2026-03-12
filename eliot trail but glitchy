@@ -1,0 +1,101 @@
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    Object.assign(canvas.style, {
+        position: 'fixed', inset: 0, zIndex: 999999, pointerEvents: 'none'
+    });
+    document.body.appendChild(canvas);
+
+    // Corrupted Nysn Palette: Neon Cyan, Magenta, Green, and "Static" White
+    const glitchColors = ['#00ffff', '#ff00ff', '#00ff00', '#ffffff', '#ff0000']; 
+    let glitches = [];
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class GlitchEliot {
+        constructor(x, y, isExplosion = false) {
+            this.x = x; this.y = y;
+            this.isExplosion = isExplosion;
+            this.text = "Eliot";
+            this.fontSize = Math.random() * 20 + 10;
+            this.angle = Math.random() * Math.PI * 2;
+            
+            // Explosion speed is high to simulate a "System Error" burst
+            this.speed = isExplosion ? Math.random() * 15 + 8 : Math.random() * 3 + 1;
+            this.color = glitchColors[Math.floor(Math.random() * glitchColors.length)];
+            this.opacity = 1;
+            this.jitter = 10; // How much it "teleports"
+        }
+
+        update() {
+            // Glitch Jitter: Randomly offset position every frame
+            this.x += Math.cos(this.angle) * this.speed + (Math.random() - 0.5) * this.jitter;
+            this.y += Math.sin(this.angle) * this.speed + (Math.random() - 0.5) * this.jitter;
+            
+            if (this.isExplosion) {
+                this.speed *= 0.94; // Slow down like a "dying" process
+            } else {
+                this.x -= 2; // Drift left like the classic Nyan trail
+            }
+
+            this.opacity -= 0.03;
+        }
+
+        draw() {
+            if (this.opacity <= 0) return;
+            ctx.save();
+            ctx.globalAlpha = this.opacity;
+            
+            // Random Chromatic Aberration: Draw a "ghost" of Eliot
+            if (Math.random() > 0.8) {
+                ctx.fillStyle = "#ff00ff"; // Magenta ghost
+                ctx.font = `bold ${this.fontSize}px Courier`;
+                ctx.fillText(this.text, this.x + 10, this.y - 5);
+            }
+
+            // Main Glitch Text
+            ctx.shadowBlur = Math.random() > 0.5 ? 15 : 0;
+            ctx.shadowColor = this.color;
+            ctx.fillStyle = this.color;
+            ctx.font = `bold ${this.fontSize}px Courier`; // Monospace for "coding" look
+            ctx.fillText(this.text, this.x, this.y);
+            
+            ctx.restore();
+        }
+    }
+
+    // 1. CLICK = System Failure Explosion (All directions)
+    window.addEventListener('mousedown', (e) => {
+        for (let i = 0; i < 40; i++) {
+            glitches.push(new GlitchEliot(e.clientX, e.clientY, true));
+        }
+    });
+
+    // 2. MOVE = Glitchy Eliot Trail
+    window.addEventListener('mousemove', (e) => {
+        if (glitches.length < 100) {
+            glitches.push(new GlitchEliot(e.clientX, e.clientY, false));
+        }
+    });
+
+    function animate() {
+        // Transparent "Eraser" mode prevents the black screen
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.globalCompositeOperation = 'source-over';
+        glitches = glitches.filter(g => g.opacity > 0);
+        glitches.forEach(g => {
+            g.update();
+            g.draw();
+        });
+        requestAnimationFrame(animate);
+    }
+    animate();
+})();
