@@ -12,6 +12,7 @@ A collection of high-energy visual mods and "troll" scripts for Blooket. This is
 *   **🥤 Boba Tea Trail:** A unique particle trail (slightly laggy, but high vibes).
 *   **⚔️ Light Saber Glow:** Give your cursor a neon-glowing edge.
 *   **🔊 Chaos SFX:** Random sound effects triggered by your actions.
+*   "I made a script that trolls your friends by blacking out the screen with a glitchy cursor trail. 🌌💀"
 
 ---
 
