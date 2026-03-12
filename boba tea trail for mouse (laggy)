@@ -1,0 +1,70 @@
+// 1. Classic Boba Palette (The leftmost icon is usually standard milk tea)
+const colors = ['#D9B382', '#C6A664', '#8E5A30', '#5C4033', '#FFFFFF']; 
+let beams = [];
+
+class BobaSparkle {
+    constructor(x, y, isExplosion = false) {
+        this.x = x; this.y = y;
+        this.isExplosion = isExplosion;
+        
+        // Classic pearl size
+        this.size = Math.random() * 8 + 4; 
+        this.angle = Math.random() * Math.PI * 2;
+        
+        // High-velocity explosion
+        this.speed = isExplosion ? Math.random() * 12 + 6 : Math.random() * 2 + 1;
+        this.gravity = 0.12; 
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.opacity = 1;
+        
+        // Spiral spin variables for the click
+        this.spin = (Math.random() - 0.5) * 0.5; // High spin frequency
+    }
+
+    update() {
+        if (this.isExplosion) {
+            this.angle += this.spin; // This creates the spiral path
+            this.speed *= 0.98;      // Natural air resistance
+        }
+
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + this.gravity;
+        
+        this.size *= 0.96; 
+        this.opacity -= 0.02;
+    }
+
+    draw() {
+        if (this.opacity <= 0) return;
+        
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        
+        // Main pearl body
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        
+        // Classic Glow
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        
+        // Sharp "Pixel" Highlight (The shine)
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size/3, this.size/3);
+        
+        ctx.restore();
+    }
+}
+
+// Click for a Spinning Boba Spiral
+window.addEventListener('mousedown', (e) => {
+    for (let i = 0; i < 50; i++) {
+        beams.push(new BobaSparkle(e.clientX, e.clientY, true));
+    }
+});
+
+window.addEventListener('mousemove', (e) => {
+    beams.push(new BobaSparkle(e.clientX, e.clientY, false));
+});
