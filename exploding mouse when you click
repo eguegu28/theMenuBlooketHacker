@@ -1,0 +1,14 @@
+// Click Explosion Effect
+window.addEventListener('mousedown', (e) => {
+    // Create a burst of 30 sparkles on click
+    for (let i = 0; i < 30; i++) {
+        const sparkle = new FluentBeam(e.clientX, e.clientY);
+        
+        // Boost speed for the explosion so they fly out faster
+        sparkle.speed = Math.random() * 8 + 2; 
+        // Optional: make explosion particles slightly larger
+        sparkle.size = Math.random() * 20 + 10;
+        
+        beams.push(sparkle);
+    }
+});
