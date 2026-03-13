@@ -1,36 +1,53 @@
-window.onclick = (e) => {
-    // 1. Create a container so we don't spam the root DOM
-    const container = document.createElement('div');
-    container.style = "position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2147483647;"; // Max Z-Index
-    document.body.appendChild(container);
+(function() {
+    // 1. Create a "Ghost Canvas" over the game
+    const rainCanvas = document.createElement('canvas');
+    const rCtx = rainCanvas.getContext('2d');
+    rainCanvas.style = "position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2147483647;";
+    document.body.appendChild(rainCanvas);
 
-    for (let i = 0; i < 20; i++) {
-        const bit = document.createElement('span');
-        bit.innerText = Math.random() < 0.5 ? "0" : "1";
-        
-        // 2. Inline styles are faster for dynamic generation
-        bit.style = `
-            position: absolute; left: ${e.clientX}px; top: ${e.clientY}px;
-            color: #00ff41; font-family: 'Courier New', monospace;
-            font-weight: 900; font-size: 24px; text-shadow: 0 0 10px #0f0;
-            opacity: 1; transform: scale(1);
-        `;
-        container.appendChild(bit);
+    const resize = () => {
+        rainCanvas.width = window.innerWidth;
+        rainCanvas.height = window.innerHeight;
+    };
+    window.onresize = resize; resize();
 
-        // 3. Animation Logic
-        const destX = (Math.random() - 0.5) * 500;
-        const destY = (Math.random() - 0.5) * 500;
-        const rotate = Math.random() * 1080; // 3 full spins
+    // 2. Binary Rain Logic
+    const fontSize = 16;
+    const columns = Math.floor(rainCanvas.width / fontSize);
+    const drops = new Array(columns).fill(1);
+    let isRaining = false;
 
-        bit.animate([
-            { transform: 'translate(0, 0) scale(2) rotate(0deg)', opacity: 1 },
-            { transform: `translate(${destX}px, ${destY}px) scale(0) rotate(${rotate}deg)`, opacity: 0 }
-        ], {
-            duration: 900,
-            easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)' 
-        });
-    }
+    const drawRain = () => {
+        if (!isRaining) return;
+        rCtx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        rCtx.fillRect(0, 0, rainCanvas.width, rainCanvas.height);
 
-    // 4. Cleanup the entire container at once to save memory
-    setTimeout(() => container.remove(), 1000);
-};
+        rCtx.fillStyle = "#0f0";
+        rCtx.font = fontSize + "px monospace";
+
+        for (let i = 0; i < drops.length; i++) {
+            const text = Math.random() < 0.5 ? "0" : "1";
+            rCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            if (drops[i] * fontSize > rainCanvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+            drops[i]++;
+        }
+    };
+
+    // 3. The Trigger - Only rain when you want it
+    window.triggerBinaryRain = (duration = 3000) => {
+        isRaining = true;
+        setTimeout(() => {
+            isRaining = false;
+            rCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+        }, duration);
+    };
+
+    // 4. Hook into the Click or a "Rare Catch" event
+    window.addEventListener('mousedown', () => window.triggerBinaryRain(1500));
+
+    setInterval(drawRain, 33);
+    console.log("%c [MATRIX]: Rain Engine Loaded. Click to test. ", "color:#0f0; font-weight:bold;");
+})();
