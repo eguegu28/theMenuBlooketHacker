@@ -1,0 +1,72 @@
+(function() {
+    // 1. GLOBAL SETTINGS (The "Universe Scale")
+    window.v19 = 1e22; 
+    window.long = 64; 
+    window.trailBuffer = [];
+    window.chaosActive = false;
+
+    // 2. CREATE THE MENU UI
+    const menuDiv = document.createElement('div');
+    menuDiv.id = 'chaos-menu-ui';
+    menuDiv.style = `
+        position: fixed; top: 10%; left: 10%; width: 220px; 
+        background: #000; border: 3px solid #ff0000; color: #ff0000;
+        font-family: 'Courier New', monospace; z-index: 100000;
+        padding: 15px; border-radius: 5px; box-shadow: 0 0 20px #ff0000;
+        cursor: move; text-align: center;
+    `;
+    menuDiv.innerHTML = `
+        <h2 style="margin:0 0 10px 0; font-size:18px;">🔥 CHAOS MENU 🔥</h2>
+        <p style="font-size:10px; color:#555;">v10000000000000000000000</p>
+        <button id="toggle-meg" style="width:100%; padding:8px; margin:5px 0; background:#222; color:#0f0; border:1px solid #0f0; cursor:pointer;">ACTIVATE MEGALODON</button>
+        <button id="glitch-btn" style="width:100%; padding:8px; margin:5px 0; background:#222; color:#f0f; border:1px solid #f0f; cursor:pointer;">GLITCH SCREEN</button>
+        <button id="clear-btn" style="width:100%; padding:8px; margin:5px 0; background:#222; color:#fff; border:1px solid #fff; cursor:pointer;">CLEAR TRAIL</button>
+        <p style="margin-top:10px; font-size:9px;">Hacker: eguegu28</p>
+    `;
+    document.body.appendChild(menuDiv);
+
+    // 3. DRAGGABLE LOGIC
+    let isDragging = false, offset = [0,0];
+    menuDiv.onmousedown = (e) => { isDragging = true; offset = [menuDiv.offsetLeft - e.clientX, menuDiv.offsetTop - e.clientY]; };
+    document.onmousemove = (e) => { if(isDragging) { menuDiv.style.left = (e.clientX + offset[0]) + 'px'; menuDiv.style.top = (e.clientY + offset[1]) + 'px'; } };
+    document.onmouseup = () => isDragging = false;
+
+    // 4. BUTTON ACTIONS
+    document.getElementById('toggle-meg').onclick = () => {
+        window.chaosActive = !window.chaosActive;
+        document.getElementById('toggle-meg').innerText = window.chaosActive ? "DEACTIVATE" : "ACTIVATE MEGALODON";
+        console.log("Megalodon State: " + window.chaosActive);
+    };
+
+    document.getElementById('glitch-btn').onclick = () => {
+        document.body.style.filter = document.body.style.filter ? "" : "invert(1) hue-rotate(180deg)";
+    };
+
+    document.getElementById('clear-btn').onclick = () => { window.trailBuffer = []; };
+
+    // 5. THE CORE ENGINE (Canvas Hijacker)
+    const ctx = document.querySelector('canvas')?.getContext('2d');
+    
+    setInterval(() => {
+        if (!window.chaosActive || !ctx) return;
+        
+        // This is a generic "Mouse/Player" tracker since Blooket's state is buried
+        // We'll use the mouse as a fallback for the trail if the shark isn't hooked
+        const targetX = window.sharkX || window.mouseX || 0;
+        const targetY = window.sharkY || window.mouseY || 0;
+
+        window.trailBuffer.unshift({ x: targetX, y: targetY, a: Math.random() * 6.28 });
+        if (window.trailBuffer.length > window.long) window.trailBuffer.pop();
+
+        window.trailBuffer.forEach((pos, i) => {
+            const size = window.v19 * (1 - (i / window.long));
+            ctx.fillStyle = `rgba(255, 0, 0, ${1 - (i/window.long)})`;
+            ctx.fillRect(pos.x - (size/2), pos.y - (size/2), size, size);
+        });
+    }, 16);
+
+    // Track mouse just in case the shark hook fails
+    window.onmousemove = (e) => { window.mouseX = e.clientX; window.mouseY = e.clientY; };
+
+    console.log("%c [MENU READY]: Drag the red box to move! ", "color:#0f0; font-weight:bold;");
+})();
