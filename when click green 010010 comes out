@@ -1,0 +1,36 @@
+window.onclick = (e) => {
+    // 1. Create a container so we don't spam the root DOM
+    const container = document.createElement('div');
+    container.style = "position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2147483647;"; // Max Z-Index
+    document.body.appendChild(container);
+
+    for (let i = 0; i < 20; i++) {
+        const bit = document.createElement('span');
+        bit.innerText = Math.random() < 0.5 ? "0" : "1";
+        
+        // 2. Inline styles are faster for dynamic generation
+        bit.style = `
+            position: absolute; left: ${e.clientX}px; top: ${e.clientY}px;
+            color: #00ff41; font-family: 'Courier New', monospace;
+            font-weight: 900; font-size: 24px; text-shadow: 0 0 10px #0f0;
+            opacity: 1; transform: scale(1);
+        `;
+        container.appendChild(bit);
+
+        // 3. Animation Logic
+        const destX = (Math.random() - 0.5) * 500;
+        const destY = (Math.random() - 0.5) * 500;
+        const rotate = Math.random() * 1080; // 3 full spins
+
+        bit.animate([
+            { transform: 'translate(0, 0) scale(2) rotate(0deg)', opacity: 1 },
+            { transform: `translate(${destX}px, ${destY}px) scale(0) rotate(${rotate}deg)`, opacity: 0 }
+        ], {
+            duration: 900,
+            easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)' 
+        });
+    }
+
+    // 4. Cleanup the entire container at once to save memory
+    setTimeout(() => container.remove(), 1000);
+};
