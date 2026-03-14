@@ -1,0 +1,137 @@
+/**
+ * THE_MENU_BOOKET_HACKER: SAKURA_ACCUMULATION_V40000
+ * Realistic Petal Pile Physics | High-Performance Geometry
+ */
+
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '999999'
+    });
+
+    const state = {
+        petals: [],
+        pile: [], // Static petals on floor
+        maxPile: 200,
+        wind: 0.1
+    };
+
+    class RealisticPetal {
+        constructor(x, y, isBurst = false) {
+            this.x = x;
+            this.y = y;
+            this.vx = (Math.random() - 0.5) * (isBurst ? 10 : 1.5) + state.wind;
+            this.vy = isBurst ? (Math.random() - 0.5) * 8 : (Math.random() * 1.2 + 0.6);
+            this.size = Math.random() * 8 + 7;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.004 + 0.002;
+            const hues = ['#ffd1dc', '#ffb7c5', '#f8c3cd', '#fadadd', '#ffffff'];
+            this.color = hues[Math.floor(Math.random() * hues.length)];
+            this.angle = Math.random() * Math.PI * 2;
+            this.spin = (Math.random() - 0.5) * 0.05;
+            this.flip = Math.random() * Math.PI;
+            this.flipSpeed = Math.random() * 0.03 + 0.02;
+            this.swing = Math.random() * Math.PI;
+            this.isGrounded = false;
+        }
+
+        update() {
+            if (this.isGrounded) return;
+            this.x += this.vx + Math.sin(this.swing) * 0.6;
+            this.y += this.vy;
+            this.angle += this.spin;
+            this.flip += this.flipSpeed;
+            this.swing += 0.04;
+            this.life -= this.decay;
+
+            // Ground Collision (Accumulation)
+            if (this.y >= window.innerHeight - 5) {
+                this.y = window.innerHeight - (Math.random() * 8);
+                this.isGrounded = true;
+                this.life = 1.0; 
+                state.pile.push(this);
+                if (state.pile.length > state.maxPile) state.pile.shift();
+            }
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+            const f = Math.sin(this.flip);
+            ctx.scale(f, 1);
+            ctx.globalAlpha = this.life;
+
+            // Shadow
+            if (!this.isGrounded) {
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+                ctx.shadowOffsetY = 15;
+            }
+
+            // Notched Heart Geometry
+            ctx.beginPath();
+            ctx.moveTo(0, this.size);
+            ctx.bezierCurveTo(-this.size, this.size * 0.4, -this.size * 1.2, -this.size * 0.8, 0, -this.size * 0.2);
+            ctx.lineTo(0, 0); 
+            ctx.lineTo(0, -this.size * 0.2);
+            ctx.bezierCurveTo(this.size * 1.2, -this.size * 0.8, this.size, this.size * 0.4, 0, this.size);
+            
+            const g = ctx.createLinearGradient(0, -this.size, 0, this.size);
+            g.addColorStop(0, this.color);
+            g.addColorStop(1, '#f8c3cd');
+            ctx.fillStyle = g;
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Auto-Rain from top
+        if (Math.random() > 0.96) {
+            state.petals.push(new RealisticPetal(Math.random() * canvas.width, -20));
+        }
+
+        // Draw Pile (Grounded)
+        for (let i = 0; i < state.pile.length; i++) {
+            state.pile[i].draw();
+        }
+
+        // Update & Draw Falling
+        for (let i = state.petals.length - 1; i >= 0; i--) {
+            const p = state.petals[i];
+            p.update();
+            if (p.isGrounded) {
+                state.petals.splice(i, 1);
+            } else {
+                p.draw();
+                if (p.life <= 0) state.petals.splice(i, 1);
+            }
+        }
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        if (Math.random() > 0.8) state.petals.push(new RealisticPetal(e.clientX, e.clientY));
+    });
+
+    window.addEventListener('mousedown', e => {
+        for (let i = 0; i < 35; i++) state.petals.push(new RealisticPetal(e.clientX, e.clientY, true));
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+})();
