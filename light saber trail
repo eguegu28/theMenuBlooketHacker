@@ -1,0 +1,182 @@
+/* BLOOKET_KYBER_INJECTOR_V40000 */
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '999999'
+    });
+
+    const state = {
+        active: false,
+        bladeLength: 0,
+        targetLength: 0,
+        pos: { x: window.innerWidth/2, y: window.innerHeight/2 },
+        lastPos: { x: 0, y: 0 },
+        angle: -Math.PI / 4,
+        targetAngle: -Math.PI / 4,
+        particles: []
+    };
+
+    // --- KYBER AUDIO ---
+    const Audio = {
+        ctx: null, osc: null, gain: null,
+        init() {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.osc = this.ctx.createOscillator();
+            this.gain = this.ctx.createGain();
+            this.osc.type = 'sawtooth';
+            this.osc.frequency.setValueAtTime(63, this.ctx.currentTime);
+            this.gain.gain.setValueAtTime(0, this.ctx.currentTime);
+            this.osc.connect(this.gain);
+            this.gain.connect(this.ctx.destination);
+            this.osc.start();
+        },
+        update(speed, isActive) {
+            if (!this.ctx) return;
+            const vol = isActive ? (0.08 + (speed * 0.004)) : 0;
+            const freq = 63 + (speed * 0.4);
+            this.gain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.05);
+            this.osc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.05);
+        }
+    };
+
+    class Spark {
+        constructor(x, y, vx, vy) {
+            this.x = x; this.y = y;
+            this.vx = vx; this.vy = vy;
+            this.life = 1;
+        }
+        update() { this.x += this.vx; this.y += this.vy; this.life -= 0.05; }
+    }
+
+    function updateSaber() {
+        state.bladeLength += (state.targetLength - state.bladeLength) * 0.25;
+        const dx = state.pos.x - state.lastPos.x;
+        const dy = state.pos.y - state.lastPos.y;
+        const speed = Math.hypot(dx, dy);
+        
+        if (speed > 1) state.targetAngle = Math.atan2(dy, dx) + Math.PI / 2;
+        
+        let diff = state.targetAngle - state.angle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        state.angle += diff * 0.15;
+
+        ctx.save();
+        // OFFSET: Stays behind your actual cursor so you can still click Blooket answers
+        const offsetX = Math.sin(state.angle) * 40;
+        const offsetY = -Math.cos(state.angle) * 40;
+        
+        ctx.translate(state.pos.x + offsetX, state.pos.y + offsetY);
+        ctx.rotate(state.angle);
+
+        // HILT
+        ctx.fillStyle = '#C0C0C0';
+        ctx.fillRect(-6, 0, 12, 35);
+        ctx.fillStyle = '#222';
+        ctx.fillRect(-6, 20, 12, 3);
+        ctx.fillRect(-6, 25, 12, 3);
+        ctx.fillRect(-6, 30, 12, 3);
+
+        // BLADE
+        if (state.bladeLength > 0.01) {
+            const bLen = -320 * state.bladeLength;
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = '#4ade80';
+            
+            ctx.lineWidth = 14;
+            ctx.strokeStyle = 'rgba(74, 222, 128, 0.4)';
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, bLen); ctx.stroke();
+            
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.shadowBlur = 10;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, bLen); ctx.stroke();
+
+            if (speed > 20) {
+                state.particles.push(new Spark(state.pos.x + offsetX, state.pos.y + offsetY, (Math.random()-0.5)*10, (Math.random()-0.5)*10));
+            }
+        }
+        ctx.restore();
+        Audio.update(speed, state.active);
+        state.lastPos = { ...state.pos };
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updateSaber();
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+            const p = state.particles[i];
+            p.update();
+            ctx.fillStyle = `rgba(150, 255, 180, ${p.life})`;
+            ctx.fillRect(p.x, p.y, 3, 3);
+            if (p.life <= 0) state.particles.splice(i, 1);
+        }
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => { state.pos = { x: e.clientX, y: e.clientY }; });
+    window.addEventListener('mousedown', () => {
+        if (!Audio.ctx) Audio.init();
+        state.active = !state.active;
+        state.targetLength = state.active ? 1 : 0;
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+})();
+class HeartParticle {
+    // ... constructor stays mostly same, but let's add a length property
+    constructor(x, y) {
+        this.x = x; this.y = y;
+        this.size = Math.random() * 20 + 10; // Blade length
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 2 + 1;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.opacity = 1;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        
+        // The Lightsaber Glow Effect
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = this.color;
+        ctx.strokeStyle = "#fff"; // White core
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+
+        ctx.beginPath();
+        // Drawing a short beam instead of a heart
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(
+            this.x + Math.cos(this.angle) * this.size, 
+            this.y + Math.sin(this.angle) * this.size
+        );
+        ctx.stroke();
+        
+        // Outer colored glow layer
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        this.opacity -= 0.015; // Slower fade for "afterimage" effect
+    }
+}
