@@ -1,0 +1,114 @@
+/**
+ * THE_MENU_BOOKET_HACKER: UNDERDEFINED_GLITCH_V40000
+ * System Instability | Visual Corruption | Null Pointer Simulation
+ */
+
+(function() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes glitch-shake {
+            0% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px); }
+            40% { transform: translate(-5px, -5px); }
+            60% { transform: translate(5px, 5px); }
+            80% { transform: translate(5px, -5px); }
+            100% { transform: translate(0); }
+        }
+        .underdefined-critical {
+            animation: glitch-shake 0.1s infinite;
+            filter: hue-rotate(90deg) invert(1);
+            background: #ff0055 !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '10000000',
+        mixBlendMode: 'difference'
+    });
+
+    const state = {
+        glitchActive: false,
+        errors: []
+    };
+
+    class ErrorFragment {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.text = Math.random() > 0.5 ? "undefined" : "NaN";
+            this.vx = (Math.random() - 0.5) * 20;
+            this.vy = (Math.random() - 0.5) * 20;
+            this.life = 1.0;
+            this.color = Math.random() > 0.5 ? "#00ff00" : "#ff00ff";
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.life -= 0.02;
+        }
+        draw() {
+            ctx.globalAlpha = this.life;
+            ctx.font = "bold 20px monospace";
+            ctx.fillStyle = this.color;
+            ctx.fillText(this.text, this.x, this.y);
+            // Draw "Corrupted" rects
+            if(Math.random() > 0.8) {
+                ctx.fillRect(this.x, this.y, 50, 10);
+            }
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Random Screen Flickers
+        if (state.glitchActive && Math.random() > 0.95) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        for (let i = state.errors.length - 1; i >= 0; i--) {
+            state.errors[i].update();
+            state.errors[i].draw();
+            if (state.errors[i].life <= 0) state.errors.splice(i, 1);
+        }
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        if (state.glitchActive) {
+            state.errors.push(new ErrorFragment(e.clientX, e.clientY));
+        }
+    });
+
+    window.addEventListener('mousedown', () => {
+        state.glitchActive = !state.glitchActive;
+        
+        // Trigger Blooket UI Corruption
+        const targets = document.querySelectorAll('div, button, img');
+        targets.forEach(el => {
+            if (state.glitchActive && Math.random() > 0.8) {
+                el.classList.add('underdefined-critical');
+            } else {
+                el.classList.remove('underdefined-critical');
+            }
+        });
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+
+    console.log("%c UNDERDEFINED_ENTROPY_V40000: ACTIVE ", "background: #000; color: #ff0055;");
+})();
