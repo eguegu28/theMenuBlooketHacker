@@ -1,0 +1,108 @@
+/**
+ * THE_MENU_BOOKET_HACKER: CHARIZARD_FLAME_V40000
+ * Iconic Tail-Flame Trail | High-Temperature Plasma
+ */
+
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '999999'
+    });
+
+    const state = {
+        pos: { x: window.innerWidth/2, y: window.innerHeight/2 },
+        particles: []
+    };
+
+    // Charizard's fiery color palette
+    const colors = ['#f2684a', '#faaa6d', '#ffb041', '#ffeeb0', '#ffffff'];
+
+    class FlameParticle {
+        constructor(x, y, isEmber = false) {
+            this.x = x;
+            this.y = y;
+            this.isEmber = isEmber;
+            
+            // Fire rises up and drifts slightly
+            this.vx = (Math.random() - 0.5) * (isEmber ? 4 : 2);
+            this.vy = Math.random() * -3 - (isEmber ? 2 : 1);
+            
+            this.size = Math.random() * (isEmber ? 4 : 15) + 2;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.03 + 0.02;
+            this.color = colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life -= this.decay;
+            // Flame expands as it rises, embers shrink
+            this.size = this.isEmber ? this.size * 0.96 : this.size * 1.02;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.life;
+            ctx.globalCompositeOperation = 'lighter'; // Makes fire "glow"
+            
+            ctx.shadowBlur = this.isEmber ? 5 : 15;
+            ctx.shadowColor = this.color;
+            
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Update and draw fire
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+            const p = state.particles[i];
+            p.update();
+            p.draw();
+            if (p.life <= 0) state.particles.splice(i, 1);
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        state.pos = { x: e.clientX, y: e.clientY };
+        
+        // Spawn main flame
+        for(let i = 0; i < 3; i++) {
+            state.particles.push(new FlameParticle(e.clientX, e.clientY));
+        }
+        
+        // Occasional flying embers
+        if(Math.random() > 0.8) {
+            state.particles.push(new FlameParticle(e.clientX, e.clientY, true));
+        }
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        // "Flamethrower" burst
+        for (let i = 0; i < 40; i++) {
+            state.particles.push(new FlameParticle(e.clientX, e.clientY, Math.random() > 0.5));
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+})();
