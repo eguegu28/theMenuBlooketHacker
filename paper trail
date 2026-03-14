@@ -1,0 +1,93 @@
+/**
+ * THE_MENU_BOOKET_HACKER: JOB_APPLICATION_STORM_V40000
+ * Resume Rain & Application Trail
+ */
+
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '999999'
+    });
+
+    const state = {
+        pos: { x: window.innerWidth/2, y: window.innerHeight/2 },
+        papers: []
+    };
+
+    const phrases = ["HIRED!", "APPLY", "RESUME", "JOB", "CV", "DECLINED", "ACCEPTED"];
+
+    class Application {
+        constructor(x, y) {
+            this.x = x; this.y = y;
+            this.w = 30; this.h = 40;
+            this.vx = (Math.random() - 0.5) * 6;
+            this.vy = Math.random() * 5 + 2;
+            this.rotation = Math.random() * Math.PI * 2;
+            this.spin = (Math.random() - 0.5) * 0.2;
+            this.life = 1.0;
+            this.text = phrases[Math.floor(Math.random() * phrases.length)];
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.rotation += this.spin;
+            this.life -= 0.015;
+        }
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            ctx.globalAlpha = this.life;
+            
+            // Draw Paper
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+            ctx.strokeRect(-this.w/2, -this.h/2, this.w, this.h);
+            
+            // Draw Lines/Text
+            ctx.fillStyle = '#333';
+            ctx.font = '5px monospace';
+            ctx.fillText(this.text, -this.w/2 + 2, -this.h/2 + 10);
+            for(let i=0; i<3; i++) {
+                ctx.fillRect(-this.w/2 + 4, -this.h/2 + 15 + (i*6), this.w - 8, 1);
+            }
+            
+            ctx.restore();
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = state.papers.length - 1; i >= 0; i--) {
+            state.papers[i].update();
+            state.papers[i].draw();
+            if (state.papers[i].life <= 0) state.papers.splice(i, 1);
+        }
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        state.pos = { x: e.clientX, y: e.clientY };
+        if(Math.random() > 0.7) state.papers.push(new Application(e.clientX, e.clientY));
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        // "Mass Recruitment" Wave
+        for(let i=0; i<15; i++) state.papers.push(new Application(e.clientX, e.clientY));
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+})();
