@@ -1,0 +1,157 @@
+/**
+ * THE_MENU_BOOKET_HACKER: INFINITY_GAUNTLET_V40000
+ * Finality Engine | Snap to Disintegrate
+ */
+
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '999999'
+    });
+
+    const state = {
+        pos: { x: window.innerWidth/2, y: window.innerHeight/2 },
+        lastPos: { x: 0, y: 0 },
+        isSnapping: false,
+        snapProgress: 0,
+        particles: []
+    };
+
+    const stones = [
+        { color: '#fbbf24', name: 'Mind' },    // Yellow
+        { color: '#6d28d9', name: 'Space' },   // Blue/Purple
+        { color: '#ef4444', name: 'Reality' }, // Red
+        { color: '#22c55e', name: 'Time' },    // Green
+        { color: '#f97316', name: 'Soul' },    // Orange
+        { color: '#a855f7', name: 'Power' }    // Purple
+    ];
+
+    class Dust {
+        constructor(x, y) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random() - 0.5) * 4;
+            this.vy = (Math.random() - 0.5) * -4;
+            this.life = 1;
+            this.color = stones[Math.floor(Math.random() * stones.length)].color;
+        }
+        update() { this.x += this.vx; this.y += this.vy; this.life -= 0.02; }
+    }
+
+    function drawGauntlet() {
+        const scale = 0.8;
+        ctx.save();
+        ctx.translate(state.pos.x, state.pos.y);
+        
+        // Tilt based on movement
+        const tilt = (state.pos.x - state.lastPos.x) * 0.1;
+        ctx.rotate(tilt * Math.PI / 180);
+
+        // 1. The Golden Gauntlet (Left-Handed as per Thanos)
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(251, 191, 36, 0.5)';
+        ctx.fillStyle = '#fbbf24'; // Gold
+        
+        // Palm/Back of hand
+        ctx.beginPath();
+        ctx.roundRect(-25, 0, 50, 60, 10);
+        ctx.fill();
+        
+        // Fingers
+        const fingerWidth = 8;
+        for(let i = 0; i < 4; i++) {
+            ctx.fillStyle = i === 1 && state.isSnapping ? '#d97706' : '#f59e0b';
+            ctx.beginPath();
+            ctx.roundRect(-22 + (i * 12), -25, fingerWidth, 35, 4);
+            ctx.fill();
+        }
+        // Thumb
+        ctx.beginPath();
+        ctx.roundRect(18, 15, 12, 25, 4);
+        ctx.fill();
+
+        // 2. The Stones
+        stones.forEach((stone, i) => {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = stone.color;
+            ctx.fillStyle = stone.color;
+            
+            let sx, sy;
+            if(i === 0) { sx = 0; sy = 25; } // Mind (Big one)
+            else { sx = -18 + (i-1) * 9; sy = -15; } // Others on knuckles
+            
+            ctx.beginPath();
+            ctx.arc(sx, sy, i === 0 ? 6 : 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // 3. Snap Effect
+        if(state.isSnapping) {
+            ctx.shadowBlur = 40;
+            ctx.shadowColor = '#fff';
+            ctx.fillStyle = `rgba(255, 255, 255, ${1 - state.snapProgress})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, state.snapProgress * 100, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if(state.isSnapping) {
+            state.snapProgress += 0.05;
+            if(state.snapProgress >= 1) {
+                state.isSnapping = false;
+                state.snapProgress = 0;
+            }
+        }
+
+        drawGauntlet();
+
+        state.particles.forEach((p, i) => {
+            p.update();
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.fillRect(p.x, p.y, 3, 3);
+            if(p.life <= 0) state.particles.splice(i, 1);
+        });
+
+        state.lastPos = { ...state.pos };
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        state.pos = { x: e.clientX, y: e.clientY };
+        if(Math.random() > 0.9) state.particles.push(new Dust(e.clientX, e.clientY));
+    });
+
+    window.addEventListener('mousedown', () => {
+        state.isSnapping = true;
+        // Visual "Disintegration" - randomly hide elements on page
+        const elements = document.querySelectorAll('div, p, button, img');
+        elements.forEach(el => {
+            if(Math.random() > 0.5 && el.style.opacity !== '0') {
+                el.style.transition = 'opacity 1s, filter 1s';
+                el.style.filter = 'grayscale(1) blur(5px)';
+                el.style.opacity = '0';
+                el.style.pointerEvents = 'none';
+            }
+        });
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+})();
