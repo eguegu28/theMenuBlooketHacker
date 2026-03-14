@@ -1,0 +1,81 @@
+/**
+ * v400000: Glitch System & Stat Obfuscator
+ * Action: Scrambles the viewport and hides UI elements
+ */
+
+(async () => {
+    // 1. Initial Prompt
+    while (!document.body) await new Promise(r => requestAnimationFrame(r));
+    const target = prompt("Blooket says: Which person do you want to glitch?");
+    if (!target) return;
+
+    // 2. Inject Glitch Styles
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes glitch-anim {
+            0% { clip-path: inset(10% 0 30% 0); transform: translate(-5px, 5px); }
+            20% { clip-path: inset(40% 0 10% 0); transform: translate(5px, -5px); }
+            40% { clip-path: inset(80% 0 5% 0); transform: translate(-10px, 10px); }
+            60% { clip-path: inset(5% 0 70% 0); transform: translate(10px, -10px); }
+            80% { clip-path: inset(20% 0 40% 0); transform: translate(-5px, 5px); }
+            100% { clip-path: inset(10% 0 30% 0); transform: translate(0); }
+        }
+        .glitch-overlay {
+            position: fixed; inset: 0; 
+            background: rgba(0, 255, 150, 0.05);
+            backdrop-filter: blur(8px) contrast(150%) hue-rotate(90deg);
+            z-index: 10000; pointer-events: none;
+        }
+        .glitch-slice {
+            position: fixed; inset: 0;
+            background: inherit;
+            backdrop-filter: invert(1) contrast(200%);
+            animation: glitch-anim 0.2s infinite linear alternate-reverse;
+            z-index: 10001; opacity: 0.3;
+        }
+        /* Hides common stat containers found in Blooket/Games */
+        .hide-stats {
+            filter: blur(25px) !important;
+            opacity: 0.1 !important;
+            pointer-events: none !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 3. Create Visual Overlays
+    const overlay = document.createElement('div');
+    overlay.className = 'glitch-overlay';
+    
+    const slice = document.createElement('div');
+    slice.className = 'glitch-slice';
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(slice);
+
+    // 4. Hide Stats (Targeting common UI patterns)
+    const hideUI = () => {
+        // Targets div elements containing "Gold", "Score", "Tokens", or "Stats"
+        const elements = document.querySelectorAll('div, span, p');
+        elements.forEach(el => {
+            const text = el.innerText.toLowerCase();
+            if (text.includes('gold') || text.includes('tokens') || text.includes('score') || text.includes('stats')) {
+                el.classList.add('hide-stats');
+            }
+        });
+    };
+
+    // Run hide loop
+    const statInterval = setInterval(hideUI, 500);
+
+    // 5. Click to Dismiss (Optional: For testing)
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            overlay.remove();
+            slice.remove();
+            clearInterval(statInterval);
+            document.querySelectorAll('.hide-stats').forEach(el => el.classList.remove('hide-stats'));
+        }
+    });
+
+    console.log("Glitch Active. Target: " + target + ". Press ESC to restore.");
+})();
