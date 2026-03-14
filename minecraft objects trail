@@ -1,0 +1,104 @@
+/**
+ * THE_MENU_BOOKET_HACKER: PIXEL_LOGO_V40000
+ * Optimized for Blooket | Retro Aesthetic
+ */
+
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '999999'
+    });
+
+    // Disable smoothing for that crisp pixel art look
+    ctx.imageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+
+    const state = {
+        particles: [],
+        logoData: [
+            [0,1,1,1,0],
+            [1,0,0,0,1],
+            [1,0,1,0,1], // Simple 8-bit eye/face logo
+            [1,0,0,0,1],
+            [0,1,1,1,0]
+        ]
+    };
+
+    class PixelLogo {
+        constructor(x, y, isBlast = false) {
+            this.x = x;
+            this.y = y;
+            this.vx = (Math.random() - 0.5) * (isBlast ? 12 : 3);
+            this.vy = (Math.random() - 0.5) * (isBlast ? 12 : 3);
+            this.size = Math.random() * 4 + 3; // Pixel size
+            this.life = 1.0;
+            this.decay = Math.random() * 0.02 + 0.01;
+            this.color = ['#00ff00', '#00cc00', '#ffffff'][Math.floor(Math.random() * 3)];
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life -= this.decay;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.life;
+            ctx.fillStyle = this.color;
+            
+            // Draw the logo using small squares (pixels)
+            const s = this.size;
+            state.logoData.forEach((row, rIdx) => {
+                row.forEach((pixel, cIdx) => {
+                    if (pixel === 1) {
+                        ctx.fillRect(
+                            this.x + (cIdx * s) - (state.logoData[0].length * s / 2),
+                            this.y + (rIdx * s) - (state.logoData.length * s / 2),
+                            s, s
+                        );
+                    }
+                });
+            });
+            ctx.restore();
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+            state.particles[i].update();
+            state.particles[i].draw();
+            if (state.particles[i].life <= 0) state.particles.splice(i, 1);
+        }
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        if (Math.random() > 0.8) {
+            state.particles.push(new PixelLogo(e.clientX, e.clientY));
+        }
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        // "System Override" Blast
+        for (let i = 0; i < 15; i++) {
+            state.particles.push(new PixelLogo(e.clientX, e.clientY, true));
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+})();
