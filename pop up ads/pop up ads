@@ -1,0 +1,91 @@
+const CONFIG = {
+    colors: ['#ff0055', '#00ffaa', '#0099ff', '#ffcc00', '#ff00ff'],
+    maxAds: 10,
+    minSize: 120,
+    maxSize: 200,
+    speed: 3
+};
+
+class PopUp {
+    constructor() {
+        this.w = Math.random() * (CONFIG.maxSize - CONFIG.minSize) + CONFIG.minSize;
+        this.h = this.w * 0.7;
+        this.x = Math.random() * (window.innerWidth - this.w);
+        this.y = Math.random() * (window.innerHeight - this.h);
+        this.vx = (Math.random() - 0.5) * CONFIG.speed;
+        this.vy = (Math.random() - 0.5) * CONFIG.speed;
+        this.color = CONFIG.colors[Math.floor(Math.random() * CONFIG.colors.length)];
+        this.closed = false;
+        this.init();
+    }
+
+    init() {
+        this.el = document.createElement('div');
+        Object.assign(this.el.style, {
+            position: 'fixed', width: `${this.w}px`, height: `${this.h}px`,
+            background: '#fff', border: `3px solid ${this.color}`,
+            boxShadow: '10px 10px 0px #000', zIndex: 10000,
+            fontFamily: 'Arial, sans-serif', userSelect: 'none',
+            display: 'flex', flexDirection: 'column', pointerEvents: 'auto'
+        });
+
+        const bar = document.createElement('div');
+        Object.assign(bar.style, {
+            background: this.color, height: '25px', display: 'flex',
+            justifyContent: 'space-between', alignItems: 'center', padding: '0 5px'
+        });
+        bar.innerHTML = `<span style="font-size:10px;font-weight:bold;color:#000">ADVERTISEMENT</span>`;
+
+        const xBtn = document.createElement('div');
+        xBtn.innerText = 'X';
+        Object.assign(xBtn.style, {
+            width: '18px', height: '18px', background: '#eee', border: '1px solid #000',
+            cursor: 'pointer', textAlign: 'center', fontSize: '14px', lineHeight: '18px', color: '#000'
+        });
+        
+        xBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.el.remove();
+            this.closed = true;
+        };
+
+        const body = document.createElement('div');
+        Object.assign(body.style, { flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '10px', color: '#000' });
+        body.innerHTML = `<b>YOU'VE WON!</b><br><small>Claim prize now</small>`;
+
+        bar.appendChild(xBtn);
+        this.el.appendChild(bar);
+        this.el.appendChild(body);
+        document.body.appendChild(this.el);
+    }
+
+    update() {
+        if (this.closed) return;
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x <= 0 || this.x + this.w >= window.innerWidth) this.vx *= -1;
+        if (this.y <= 0 || this.y + this.h >= window.innerHeight) this.vy *= -1;
+
+        this.el.style.left = `${this.x}px`;
+        this.el.style.top = `${this.y}px`;
+    }
+}
+
+(async () => {
+    while (!document.body) await new Promise(r => requestAnimationFrame(r));
+    const target = prompt("Blooket says: which person do you wanna give pop up adds");
+    if (!target) return;
+
+    let ads = [];
+    for(let i = 0; i < CONFIG.maxAds; i++) {
+        ads.push(new PopUp());
+    }
+
+    const loop = () => {
+        ads = ads.filter(ad => !ad.closed);
+        ads.forEach(ad => ad.update());
+        requestAnimationFrame(loop);
+    };
+    loop();
+})();
