@@ -1,0 +1,143 @@
+/**
+ * THE_MENU_BOOKET_HACKER: FALCON_FLIGHT_V40000
+ * Water Trail + Millennium Falcon Spawner
+ */
+
+(function() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0', 
+        width: '100vw', height: '100vh',
+        pointerEvents: 'none', zIndex: '999999'
+    });
+
+    const state = {
+        pos: { x: window.innerWidth/2, y: window.innerHeight/2 },
+        drops: [],
+        falcons: []
+    };
+
+    const colors = ['#0ea5e9', '#38bdf8', '#7dd3fc', '#bae6fd', '#ffffff'];
+
+    class WaterDrop {
+        constructor(x, y) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random() - 0.5) * 4;
+            this.vy = (Math.random() * 2 + 1);
+            this.gravity = 0.4;
+            this.size = Math.random() * 10 + 2;
+            this.life = 1.0;
+            this.decay = Math.random() * 0.02 + 0.01;
+        }
+        update() {
+            this.vy += this.gravity;
+            this.x += this.vx; this.y += this.vy;
+            this.life -= this.decay;
+            this.size *= 0.95;
+        }
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.life;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#0ea5e9';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    class MillenniumFalcon {
+        constructor(x, y) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random() - 0.5) * 15;
+            this.vy = (Math.random() - 0.5) * 15;
+            this.scale = 0.5;
+            this.rotation = Math.atan2(this.vy, this.vx) + Math.PI / 2;
+            this.life = 1.0;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life -= 0.01;
+        }
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            ctx.scale(this.scale, this.scale);
+            ctx.globalAlpha = this.life;
+
+            // Simple Falcon Shape (Saucer + Mandibles)
+            ctx.fillStyle = '#C0C0C0';
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+
+            // Saucer
+            ctx.beginPath();
+            ctx.arc(0, 0, 40, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+
+            // Mandibles (Front)
+            ctx.fillRect(-25, -60, 15, 40);
+            ctx.fillRect(10, -60, 15, 40);
+
+            // Cockpit (Side)
+            ctx.beginPath();
+            ctx.arc(45, -10, 10, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+
+            // Engine Glow (Blue)
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00ffff';
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(0, 35, 30, Math.PI, 0, true);
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Update Drops
+        for (let i = state.drops.length - 1; i >= 0; i--) {
+            state.drops[i].update();
+            state.drops[i].draw();
+            if (state.drops[i].life <= 0) state.drops.splice(i, 1);
+        }
+
+        // Update Falcons
+        for (let i = state.falcons.length - 1; i >= 0; i--) {
+            state.falcons[i].update();
+            state.falcons[i].draw();
+            if (state.falcons[i].life <= 0) state.falcons.splice(i, 1);
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('mousemove', e => {
+        if (Math.random() > 0.3) state.drops.push(new WaterDrop(e.clientX, e.clientY));
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        // Jump to Light Speed!
+        state.falcons.push(new MillenniumFalcon(e.clientX, e.clientY));
+    });
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    loop();
+})();
