@@ -1,0 +1,73 @@
+const CONFIG = {
+    colors: ['#0ff', '#00f', '#fff', '#0072ff'],
+    maxDist: 80,
+    decay: 0.007,
+    limit: 120
+};
+
+class QuantumNode {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 3;
+        this.vy = (Math.random() - 0.5) * 3;
+        this.life = 1.0;
+        this.color = CONFIG.colors[Math.floor(Math.random() * CONFIG.colors.length)];
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= CONFIG.decay;
+    }
+
+    draw(ctx, nodes) {
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.life;
+        ctx.fillRect(this.x, this.y, 1, 1);
+
+        nodes.forEach(n => {
+            const d = Math.hypot(this.x - n.x, this.y - n.y);
+            if (d < CONFIG.maxDist) {
+                ctx.beginPath();
+                ctx.strokeStyle = this.color;
+                ctx.globalAlpha = (1 - d / CONFIG.maxDist) * this.life;
+                ctx.lineWidth = 0.5;
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(n.x, n.y);
+                ctx.stroke();
+            }
+        });
+    }
+}
+
+(async () => {
+    while (!document.body) await new Promise(r => requestAnimationFrame(r));
+    const cvs = document.createElement('canvas');
+    Object.assign(cvs.style, { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999 });
+    document.body.appendChild(cvs);
+    const ctx = cvs.getContext('2d');
+    let nodes = [];
+
+    const resize = () => { cvs.width = window.innerWidth; cvs.height = window.innerHeight; };
+    const spawn = (e) => {
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        nodes.push(new QuantumNode(x, y));
+        if (nodes.length > CONFIG.limit) nodes.shift();
+    };
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', spawn);
+    window.addEventListener('touchstart', spawn);
+
+    const loop = () => {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        nodes = nodes.filter(n => n.life > 0);
+        nodes.forEach(n => { n.update(); n.draw(ctx, nodes); });
+        requestAnimationFrame(loop);
+    };
+
+    resize();
+    loop();
+})();
