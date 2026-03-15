@@ -1,0 +1,113 @@
+// 1. Setup Canvas
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+document.body.appendChild(canvas);
+Object.assign(canvas.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', pointerEvents: 'auto', zIndex: '99999' });
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize); resize();
+
+let ufos = [], popups = [];
+
+// 2. Tim the Alien Blook Logic
+class TimUFO {
+    constructor(x, y) {
+        this.x = x; this.y = y;
+        this.size = 40;
+        this.vx = (Math.random() - 0.5) * 3;
+        this.vy = (Math.random() - 0.5) * 1.5;
+        this.opacity = 1;
+        this.cowRotation = 0; // The spinning cow!
+        this.bob = 0;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy + Math.sin(this.bob) * 0.4;
+        this.bob += 0.08;
+        this.cowRotation += 0.15; // Animation speed
+        this.opacity -= 0.006;
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.translate(this.x, this.y);
+
+        // Tractor Beam (Light Green Cone)
+        const gradient = ctx.createLinearGradient(0, 0, 0, this.size * 1.2);
+        gradient.addColorStop(0, 'rgba(46, 204, 113, 0.4)');
+        gradient.addColorStop(1, 'rgba(46, 204, 113, 0)');
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-this.size * 0.6, this.size * 1.2);
+        ctx.lineTo(this.size * 0.6, this.size * 1.2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Spinning Cow (White/Black Square)
+        ctx.save();
+        ctx.translate(0, this.size * 0.6);
+        ctx.rotate(this.cowRotation);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(-6, -5, 12, 10); // Cow body
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, -2, 4, 4); // Cow spots
+        ctx.restore();
+
+        // Tim's UFO Dome (Clear Blue)
+        ctx.beginPath();
+        ctx.arc(0, -this.size * 0.2, this.size * 0.4, Math.PI, 0);
+        ctx.fillStyle = "rgba(135, 206, 235, 0.7)";
+        ctx.fill();
+
+        // Tim the Alien (Green Head)
+        ctx.fillStyle = "#2ecc71";
+        ctx.beginPath();
+        ctx.ellipse(0, -this.size * 0.25, 8, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // UFO Body
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size, this.size * 0.35, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "#bdc3c7";
+        ctx.fill();
+        ctx.strokeStyle = "#95a5a6";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+// 3. Interaction & Animation
+window.addEventListener('mousemove', (e) => {
+    if (Math.random() > 0.92) ufos.push(new TimUFO(e.clientX, e.clientY));
+});
+
+window.addEventListener('mousedown', (e) => {
+    ufos.forEach((u, i) => {
+        if (Math.hypot(e.clientX - u.x, e.clientY - u.y) < 50) {
+            // Weights in Fishing Frenzy are massive for Tim the Alien
+            const weight = (Math.random() * 500000 + 2000000).toLocaleString(); 
+            popups.push({ x: u.x, y: u.y, text: `+${weight} lbs`, age: 0 });
+            ufos.splice(i, 1);
+        }
+    });
+});
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ufos = ufos.filter(u => u.opacity > 0);
+    ufos.forEach(u => { u.update(); u.draw(); });
+
+    popups.forEach((p, i) => {
+        ctx.font = "bold 25px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = `rgba(241, 196, 15, ${1 - p.age / 50})`; // Gold color for heavy weight
+        ctx.fillText(p.text, p.x, p.y - p.age);
+        p.age += 1.2;
+        if (p.age > 50) popups.splice(i, 1);
+    });
+
+    requestAnimationFrame(render);
+}
+render();
