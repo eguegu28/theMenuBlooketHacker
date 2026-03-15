@@ -1,0 +1,81 @@
+// 1. Setup Canvas
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+document.body.appendChild(canvas);
+Object.assign(canvas.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', pointerEvents: 'auto', zIndex: '99999' });
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize); resize();
+
+let particles = [], popups = [], glitchActive = 0;
+
+// 2. Crypto Particle Logic
+class CryptoChar {
+    constructor(x, y) {
+        this.x = x; this.y = y;
+        const chars = "01ABCDEF789";
+        this.text = chars.charAt(Math.floor(Math.random() * chars.length));
+        this.size = Math.random() * 10 + 15;
+        this.vy = Math.random() * 2 + 1; // Falling speed
+        this.opacity = 1;
+    }
+    update() {
+        this.y += this.vy;
+        this.opacity -= 0.01;
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.font = `bold ${this.size}px monospace`;
+        ctx.fillStyle = "#00ff41"; // Classic Matrix Green
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "#00ff41";
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+    }
+}
+
+// 3. Interactions
+window.addEventListener('mousemove', (e) => {
+    if (Math.random() > 0.8) particles.push(new CryptoChar(e.clientX, e.clientY));
+});
+
+window.addEventListener('mousedown', (e) => {
+    particles.forEach((p, i) => {
+        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 30) {
+            popups.push({ x: p.x, y: p.y, age: 0 });
+            particles.splice(i, 1);
+            glitchActive = 10; // Trigger glitch duration
+        }
+    });
+});
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Glitch Effect: Invert colors briefly
+    if (glitchActive > 0) {
+        ctx.fillStyle = "rgba(0, 255, 65, 0.1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        canvas.style.filter = "invert(1) hue-rotate(90deg)";
+        glitchActive--;
+    } else {
+        canvas.style.filter = "none";
+    }
+
+    particles = particles.filter(p => p.opacity > 0);
+    particles.forEach(p => { p.update(); p.draw(); });
+
+    // "HACKED!" Popup
+    popups.forEach((p, i) => {
+        ctx.font = "bold 30px 'Courier New'";
+        ctx.textAlign = "center";
+        ctx.fillStyle = `rgba(155, 89, 182, ${1 - p.age / 40})`; // Neon Purple
+        ctx.fillText("HACKED!", p.x, p.y - p.age);
+        p.age += 1.5;
+        if (p.age > 40) popups.splice(i, 1);
+    });
+
+    requestAnimationFrame(render);
+}
+render();
