@@ -1,0 +1,100 @@
+// 1. Setup Canvas & Style
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+document.body.appendChild(canvas);
+Object.assign(canvas.style, { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', pointerEvents: 'auto', zIndex: '99999' });
+
+let eggs = [], fossilPopups = [], shakeTime = 0;
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize); resize();
+
+// 2. Dino Egg Class
+class DinoEgg {
+    constructor(x, y) {
+        this.x = x; this.y = y;
+        this.isGolden = Math.random() > 0.9; // 10% chance
+        this.width = this.isGolden ? 25 : 18;
+        this.height = this.width * 1.3;
+        this.vx = (Math.random() - 0.5) * 6;
+        this.vy = (Math.random() - 2) * 4;
+        this.gravity = 0.2;
+        this.opacity = 1;
+        this.rotation = Math.random() * Math.PI;
+    }
+    update() {
+        this.vy += this.gravity;
+        this.x += this.vx; this.y += this.vy;
+        if (this.y + this.height > canvas.height) { this.y = canvas.height - this.height; this.vy *= -0.5; }
+        this.opacity -= 0.01;
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        
+        // Egg Body
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = this.isGolden ? "#FFD700" : "#F5F5DC";
+        ctx.fill();
+        ctx.strokeStyle = this.isGolden ? "#B8860B" : "#8B4513";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Speckles
+        ctx.fillStyle = "rgba(0,0,0,0.1)";
+        for(let i=0; i<4; i++) {
+            ctx.beginPath();
+            ctx.arc((Math.random()-0.5)*10, (Math.random()-0.5)*15, 2, 0, Math.PI*2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+}
+
+// 3. Events
+window.addEventListener('mousemove', (e) => {
+    if (Math.random() > 0.85) eggs.push(new DinoEgg(e.clientX, e.clientY));
+});
+
+window.addEventListener('mousedown', (e) => {
+    eggs.forEach((egg, i) => {
+        if (Math.hypot(e.clientX - egg.x, e.clientY - egg.y) < 40) {
+            if (egg.isGolden) {
+                fossilPopups.push({ x: egg.x, y: egg.y, text: "MYSTIC!", color: "#9b59b6", age: 0 });
+                shakeTime = 15; // Trigger screen shake
+            } else {
+                fossilPopups.push({ x: egg.x, y: egg.y, text: "FOSSIL!", color: "#A0522D", age: 0 });
+            }
+            eggs.splice(i, 1);
+        }
+    });
+});
+
+// 4. Render Loop
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Apply Shake
+    if (shakeTime > 0) {
+        ctx.translate((Math.random()-0.5)*10, (Math.random()-0.5)*10);
+        shakeTime--;
+    }
+
+    eggs = eggs.filter(e => e.opacity > 0);
+    eggs.forEach(e => { e.update(); e.draw(); });
+
+    fossilPopups.forEach((f, i) => {
+        ctx.font = `bold ${f.text === "MYSTIC!" ? '40' : '25'}px Trebuchet MS`;
+        ctx.textAlign = "center";
+        ctx.fillStyle = f.color;
+        ctx.globalAlpha = 1 - f.age / 50;
+        ctx.fillText(f.text, f.x, f.y - f.age);
+        f.age += 1.5;
+        if (f.age > 50) fossilPopups.splice(i, 1);
+    });
+    requestAnimationFrame(render);
+}
+render();
